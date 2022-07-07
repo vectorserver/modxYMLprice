@@ -1,6 +1,8 @@
 # Компонент modxYMLprice v 0.1.123 beta1
 Выгрузка данных в формат Яндекс Маркет (YML, XML)
 
+DOWNLOAD: https://github.com/vectorserver/modxYMLprice/raw/1e38091b833ecb773713bf6dbe9fee9b1c36dbf6/_build/dist/modxymlprice-0.2.123-pl.transport.zip
+
 Компонент modxYMLprice v 0.1.123 beta1
 
 Выгрузка данных в формат Яндекс Маркет (YML, XML)
