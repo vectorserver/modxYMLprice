@@ -54,7 +54,7 @@ ID родительского каталога (shop_catalog_id)
   - По умолчанию: Компания - [[++site_name]]
   
 Сниппет обработчик(snippet_handler)
-  - По умолчанию: Компания - pdoResources
+  - По умолчанию:  pdoResources
 
  
 
