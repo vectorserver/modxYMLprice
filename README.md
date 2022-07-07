@@ -13,8 +13,7 @@ DOWNLOAD: https://github.com/vectorserver/modxYMLprice/raw/1e38091b833ecb773713b
 Параметры сопоставления полей в настройках https://mysite.ru/manager/index.php?a=system/settings&ns=modxYMLprice
 
 Примеры вызова:
-Прямой: https://mysite.ru/modxYMLprice.xml или https://mysite.ru/modxYMLprice.xml?parents=8
-В виде сниппета: [[!modxYMLprice_snippet? &parents=`8`]]
+В виде сниппета: [[!modxYMLprice_snippet? &parents=`8`]] где parents = id категории каталога
  - Также работают все параметры из сниппета pdoResources
  [[!modxYMLprice_snippet? &limit=`10` &parents=`8`]]
 
