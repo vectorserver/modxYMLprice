@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model package="modxYMLprice" baseClass="xPDOObject" platform="mysql" defaultEngine="InnoDB" version="1.1">
+
+</model>
