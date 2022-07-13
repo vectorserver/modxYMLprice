@@ -17,7 +17,7 @@ let {
 
         formApp: 'offers_key_mapping_form',
         gridApp: 'offers_key_mapping_modxInputs',
-        notFields: ['name', 'description', 'picture', 'vendor', 'price'],
+        notFields: ['qwe'],
         buttonAddField: 'new_buildInput',
         saveSettingsButton: 'saveSettings',
 
