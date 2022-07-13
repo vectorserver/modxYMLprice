@@ -1,5 +1,6 @@
 <?php
 /*docs fields: https://yandex.ru/support/marketplace/assortment/fields/index.html*/
+
 //build 0.2.123
 
 class modxYMLprice
@@ -7,8 +8,6 @@ class modxYMLprice
     /* @var modX $modx */
     public $modx;
     public $config = array();
-    public $offerTpl;
-
 
     /**
      * @param $modx
@@ -18,6 +17,7 @@ class modxYMLprice
     {
         $this->modx = $modx;
 
+        $this->testmode = 0;
 
         $cfg_settings = array();
         $settings = $this->modx->getCollection('modSystemSetting', array('namespace' => 'modxYMLprice'));
@@ -37,7 +37,17 @@ class modxYMLprice
             $this->config['snippet']['parents'] = $this->config['shop']['shop_catalog_id'];
         }
 
-        $this->offerTpl = $this->getOfferTpl();
+
+        $offersConfig = str_replace(array("\r", "\n", "\t"), "", trim($this->config['offers']['offers_key_mapping']));
+        //Default params
+
+        if (!$offersConfig) {
+            $offersConfig = json_encode($this->prepareFields(), JSON_UNESCAPED_UNICODE);
+            $this->setSetting('modxYMLprice_offers_key_mapping', $offersConfig);
+        }
+
+        $this->config['offers']['offers_key_mapping'] = json_decode($offersConfig);
+        $this->config['tags'] = $this->prepareFields();
 
 
     }
@@ -90,39 +100,11 @@ class modxYMLprice
     /**
      * @return array
      */
+
     private function getYmloffers()
     {
 
-        $offers_key_mapping = str_replace(array("\r", "\n", "\t", " "), "", trim($this->config['offers']['offers_key_mapping']));
-        $key_mapping = explode("||", $offers_key_mapping);
-
-
-        //Подготовка полей из настроек
-        $prepare_tags = array();
-        foreach ($key_mapping as $key_item) {
-            $m_arr = explode("==", $key_item);
-            $yml_tag = $m_arr[0];
-            $field_resource = $m_arr[1];
-
-            $types = array("tv_", "ms_");
-            $typeCheck = mb_substr($field_resource, 0, 3);
-            $typeField = in_array($typeCheck, $types) ? $typeCheck : "resource";
-
-            if ($typeField != "resource") {
-                $field_resource = mb_substr($field_resource, 3);
-            }
-
-            //bool
-            $typeField = (is_bool($field_resource) || $field_resource == "true" || $field_resource == "false") ? "bool" : $typeField;
-
-
-            $prepare_params[$typeField][] = $field_resource;
-            //key - tag yml
-            //type - resource,tv,msproduct,boo
-            $prepare_tags[$yml_tag] = array("type" => $typeField, "field" => $field_resource);
-        }
-
-
+        //
         $params_offers = array(
             'fastMode' => '1',
             'sdhowParentroot' => '1',
@@ -131,112 +113,96 @@ class modxYMLprice
         );
 
         $offers_data = $this->getData($params_offers);
-        $outputData = [];
+
+        //input tipes
+        $Inputtypes = array("tv_", "ms_");
+        $offers = array();
+        $offersXmlData = array();
+        $options_product = array();
         foreach ($offers_data as $offer_item) {
             /* @var msProduct $product */
             /* @var modResource $product */
             $product = $this->modx->getObject($offer_item->class_key, $offer_item->id);
+            $productData = $product->toArray();
 
-            $gotoXmlArray = array();
-            //$gotoXmlArray['id'] = $product->id;
-            $gotoXmlArray['name'] = $product->pagetitle;
-            $gotoXmlArray['description'] = $product->description;
-            $gotoXmlArray['url'] = $this->config["shop"]["shop_url"] . $product->uri;
-            $gotoXmlArray['categoryId'] = $product->parent;;
+            //Field reconciliation
+            foreach ($this->config['offers']['offers_key_mapping'] as $res_key => $field_data) {
+                $itemXmlData = array(
+                    'xmlTag' => $field_data->field,
+                    'value' => $field_data->default,
+                    'fieldDist' => 'resource',
+                    'res_key' => $res_key,
+                );
+                $typeCheck = mb_substr($res_key, 0, 3);
+                $field_resource = mb_substr($res_key, 3);
 
-            if ($offer_item->class_key == 'msProduct') {
-                $data = $product->toArray();
+                //Tv data
+                if ($typeCheck == "tv_") {
 
 
-                foreach ($data as $typeKey => $value) {
-                    if ($value) {
-                        switch ($typeKey) {
-                            case "vendor.name";
-                                $gotoXmlArray["vendor"] = $value;
-                                break;
-                            case "article";
-                                $gotoXmlArray["vendorCode"] = $value;
-                                break;
-                            case "price";
-                                $gotoXmlArray["price"] = $value;
-                                break;
-                            case "old_price";
-                                $gotoXmlArray["oldprice"] = $value;
-                                break;
-                            case "image";
-                                $gotoXmlArray["picture"] = $this->config["shop"]["shop_url"] . $value;
-                                break;
-                            case "vendor.country";
-                                $gotoXmlArray["country_of_origin"] = $value;
-                                break;
+                    /* @var  modTemplateVar $tv */
+                    $tv = $this->modx->getObject('modTemplateVar', array('name' => $field_resource));
 
-                            case "weight";
-                                $gotoXmlArray["weight"] = $value;
-                                break;
+                    if (!$tv) {
+                        $tv_output = $field_data->default;
+                    } else {
 
-                        }
-                    }
-                }
+                        $tv_input = $tv->getValue($product->id);
 
-                //options
-                $optionsData = $product->getOne('Data');
-                $options = $optionsData->get('options');
-                if ($options) {
-                    foreach ($options as $optKey => $iptem) {
-                        $opt = array("name" => $data[$optKey . ".caption"], "#text" => $iptem[0]);
-                        $gotoXmlArray["param"][] = $opt;
-                    }
-                }
+                        if ($tv->get('display') == "delim") {
 
-            }
-
-            //other product
-            foreach ($prepare_tags as $tagXml => $item) {
-
-                if ($item["type"] == "tv_") {
-
-                    $tvtvalue = $product->getTVValue($item['field']);
-                    if ($tvtvalue) {
-                        /* @var modTemplateVar $tvs */
-                        $tvData = $this->modx->getObject('modTemplateVar', array('name' => $item['field']));
-
-                        if ($tvData && $tvData->get('output_properties')["delimiter"] == "||") {
-                            $tvOpt = explode('||', $tvtvalue);
+                            $tvOpt = explode($tv->get('output_properties')["delimiter"], $tv_input);
 
                             $tmpOpt = array();
                             foreach ($tvOpt as $iparam) {
-                                $tmpOpt[] = array("name" => $tvData->get('caption'), "#text" => $iparam);
-
+                                $options_product[] = array("name" => $tv->get('caption'), "#text" => $iparam);
                             }
 
-                            $tvtvalue = $tmpOpt;
+                            $tv_output = $tmpOpt;
 
+                        } else {
+                            $tv_output = $tv_input;
                         }
-
-                        $gotoXmlArray[$tagXml] = $tvtvalue;
                     }
 
+                    $itemXmlData['value'] = $tv_output;
+                    $itemXmlData['fieldDist'] = 'tv';
+                    $itemXmlData['res_key'] = $field_resource;
 
-                } else if ($item["type"] == "bool") {
+                } elseif ($typeCheck == "ms_") {
 
-                    if ($item["field"]) {
-                        $gotoXmlArray[$tagXml] = $item["field"];
+
+                    $ms = $product->get($field_resource);
+                    if (!$ms) {
+                        $ms = $field_data->default;
                     }
 
+                    $itemXmlData['value'] = $ms;
+                    $itemXmlData['fieldDist'] = 'ms';
+                    $itemXmlData['res_key'] = $field_resource;
 
                 } else {
-                    if ($product->get($item['field'])) {
-                        $gotoXmlArray[$tagXml] = $product->get($item['field']);
-                    }
-
-
+                    $itemXmlData['value'] = $product->$res_key;
                 }
 
-                //Migx images
-                if ($tagXml == "picture") {
 
-                    $im_tmp = $gotoXmlArray[$tagXml];
+                //add Cfg
+                if ($itemXmlData['xmlTag'] == "url") {
+                    $itemXmlData['value'] = $this->config["shop"]["shop_url"] . $itemXmlData['value'];
+                }
 
+                if ($itemXmlData['xmlTag'] == "name" || $itemXmlData['xmlTag'] == "description") {
+                    $value = trim($itemXmlData['value']);
+                    $value = strip_tags($value);
+                    $value = htmlspecialchars($value);
+                    $value = "<![CDATA[{$value}]]>";
+                    $itemXmlData['value'] = $value;
+                }
+
+
+                if ($itemXmlData['xmlTag'] == "picture") {
+
+                    $im_tmp = $itemXmlData['value'];
 
                     $result = json_decode($im_tmp);
 
@@ -252,49 +218,57 @@ class modxYMLprice
                             }
                         }
 
-                        $gotoXmlArray[$tagXml] = $this->config["shop"]["shop_url"] . array_shift($images);
+                        $im_tmp = array_shift($images);
                     }
+
+
+                    $itemXmlData['value'] = $this->config["shop"]["shop_url"] . $im_tmp;
                 }
+
+
+                $offersXmlData[$field_data->field] = $itemXmlData;
+
 
             }
 
 
-            //def
-            $gotoXmlArray['currencyId'] = $this->config["shop"]["shop_currencyId"];
-            //$gotoXmlArray['delivery'] = 'true';
-            //$gotoXmlArray['pickup'] = 'true';
-            $outputData[$product->id] = $gotoXmlArray;
-        }
 
-        //render
-        $offers = array();
-        foreach ($outputData as $offer_id => $item_data) {
-            $offerTags = "";
-            foreach ($item_data as $tag => $value) {
-                if ($value) {
-                    if ($tag == "name" || $tag == "description") {
-                        $value = trim($value);
-                        $value = strip_tags($value);
-                        $value = htmlspecialchars($value);
-                        $value = "<![CDATA[{$value}]]>";
+            //options ms
+            if ($offer_item->class_key == "msProduct") {
+                $optionsData = $product->getOne('Data');
+                $options = $optionsData->get('options');
+                if ($options) {
+                    foreach ($options as $optKey => $iptem) {
+                        $options_product[] = array("name" => $product->get($optKey . '.caption'), "#text" => $iptem[0]);
                     }
+                }
+            }
 
-                    if ($tag == "param" && is_array($value)) {
-                        foreach ($value as $param_item) {
+            $offersXmlData["param"]["value"] = $options_product;
+
+
+            //render
+            $offerTags = "";
+            foreach ($offersXmlData as $tag => $item) {
+
+                if ($item["value"]) {
+
+
+                    if ($tag == "param" && is_array($item["value"])) {
+
+                        foreach ($item["value"] as $param_item) {
                             //<param name="Мощность">750 Вт</param>
                             $offerTags .= "\n\t\t\t\t<param name='{$param_item["name"]}'>{$param_item["#text"]}</param>";
                         }
-                        unset($item_data['param']);
+                        //unset($item_data['param']);
                     } else {
-                        $offerTags .= "\n\t\t\t\t<$tag>{$value}</$tag>";
+                        $offerTags .= "\n\t\t\t\t<$tag>{$item["value"]}</$tag>";
                     }
+
+
                 }
-
-
             }
-
-            $offers[] = "\t\t\t<offer id=\"{$offer_id}\">{$offerTags}\n\t\t\t</offer>";
-
+            $offers[] = "\t\t\t<offer id=\"{$product->id}\">{$offerTags}\n\t\t\t</offer>";
         }
 
 
@@ -320,56 +294,54 @@ class modxYMLprice
 
 
     /**
-     * @return array[]
+     * @return false|array
      */
-    public function getOfferTpl(): array
+    public function prepareFields()
     {
+        $fields = array(
+            'pagetitle' => array('field' => 'name', 'info' => 'Название (обязательный) ', 'default' => ''),
+            'parent' => array('field' => 'categoryId', 'info' => 'Id категории', 'default' => ''),
+            'uri' => array('field' => 'url', 'info' => 'Ссылка на страницу товара', 'default' => ''),
+            'description' => array('field' => 'description', 'info' => 'Описание (обязательный) || Подробное описание товара: например, его преимущества и особенности.', 'default' => ''),
 
+            //'ms_image' => array('field' => 'picture', 'info' => 'Изображение (обязательный)', 'default' => ''),
+            'tv_images' => array('field' => 'picture', 'info' => 'Изображение (обязательный)', 'default' => ''),
+            'ms_vendor.name' => array('field' => 'vendor', 'info' => 'Бренд (обязательный)', 'default' => ''),
+            'ms_size' => array('field' => 'dimensions', 'info' => 'Габариты с упаковкой (обязательный для FBY и FBS) || Длина, ширина, высота в упаковке.', 'default' => ''),
+            'ms_weight' => array('field' => 'weight', 'info' => 'Вес с упаковкой (обязательный для FBY и FBS) || Вес товара с упаковкой.', 'default' => ''),
+            'ms_vendor.country' => array('field' => 'country_of_origin', 'info' => 'Страна производства || Страна, где был произведен товар.', 'default' => ''),
+            'ms_article' => array('field' => 'vendorCode', 'info' => 'Артикул производителя || Код товара, который ему присвоил производитель.', 'default' => ''),
+            'ms_price' => array('field' => 'price', 'info' => 'Цена (обязательный)', 'default' => '1'),
+            'ms_old_price' => array('field' => 'oldprice', 'info' => 'Цена до скидки || Если товар продается со скидкой, укажите в этом поле цену без учета скидки. Маркет покажет ее зачеркнутой, чтобы покупатели видели выгоду.', 'default' => '0'),
 
-        return [
-            "id" => "9012",
-            "bid" => "80",
-            "name" => "Мороженица Brand 3811",
-            "vendor" => "Brand",
-            "vendorCode" => "A1234567B",
-            "url" => "http://best.seller.ru/product_page.asp?pid=12345",
-            "price" => "8990",
-            "oldprice" => "9990",
-            "enable_auto_discounts" => "true",
-            "currencyId" => "",
-            "categoryId" => "101",
-            "vat" => "VAT_20",
-            "picture" => "http://best.seller.ru/img/model_12345.jpg",
-            "delivery" => "true",
-            "pickup" => "true",
-            "delivery-options" => [
-                "option" => [
-                    "cost" => "300",
-                    "days" => "1",
-                    "order-before" => "18"
-                ]
-            ],
-            "pickup-options" => [
-                "option" => [
-                    "cost" => "300",
-                    "days" => "1-3"
-                ]
-            ],
-            "store" => "true",
-            "description" => "<h3>Мороженица Brand 3811</h3><p>Это прибор, который придётся по вкусу всем любителям десертов и сладостей, ведь с его помощью вы сможете делать вкусное домашнее мороженое из натуральных ингредиентов.</p>",
-            "sales_notes" => "Необходима предоплата.",
-            "manufacturer_warranty" => "true",
-            "country_of_origin" => "Китай",
-            "barcode" => "4601546021298",
-            "param" => [
-                "name" => "Цвет",
-                "#text" => "белый"
-            ],
-            "weight" => "3.6",
-            "dimensions" => "20.1/20.551/22.5",
-            "count" => "100"
-        ];
+            'tv_currencyId' => array('field' => 'currencyId', 'info' => 'Валюта (DBS) || RUR, BYN, EUR, USD, UAN, KZT', 'default' => 'RUR'),
+            //'tv_vat' => array('field' => 'vat', 'info' => 'Ставка НДС', 'default' => 'VAT_20'),
+            //'tv_count' => array('field' => 'count', 'info' => 'Доступное количество товара', 'default' => '1'),
+            'tv_available' => array('field' => 'available', 'info' => 'Статус товара (DBS) || true — товар в наличии, false — под заказ.', 'default' => ''),
+            'tv_store' => array('field' => 'store', 'info' => 'Купить в магазине без заказа (DBS) || Пометка о том, что товар можно купить офлайн, просто придя в магазин.', 'default' => 'true'),
+            'tv_delivery' => array('field' => 'delivery', 'info' => 'Доставка (DBS) || Есть ли курьерская доставка.', 'default' => 'true'),
+            'tv_pickup' => array('field' => 'pickup', 'info' => 'Самовывоз (DBS) || Доступен ли самовывоз.', 'default' => 'true'),
+            'tv_options' => array('field' => 'param', 'info' => 'Характеристики || Кроме общих свойств, у товара есть характеристики, присущие конкретной категории, к которой он относится. Например, у велосипеда есть размер рамы, а детское пюре бывает овощное, мясное или фруктовое.', 'default' => ''),
+        );
+
+        return $fields;
     }
 
+
+    /**
+     * @param $key
+     * @param $value
+     * @return bool
+     */
+    private function setSetting($key, $value): bool
+    {
+        /* @var modSystemSetting $Setting */
+        $Setting = $this->modx->getObject('modSystemSetting', $key);
+        $Setting->set('value', $value);
+        $Setting->save();
+        $this->modx->cacheManager->refresh(array('system_settings' => array()));
+        return true;
+
+    }
 
 }

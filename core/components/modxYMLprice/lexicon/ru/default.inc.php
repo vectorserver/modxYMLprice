@@ -1,6 +1,6 @@
 <?php
 $_lang['setting_modxYMLprice_offers_key_mapping'] = 'Сопоставление ключей TV или опций msProduct';
-$_lang['setting_modxYMLprice_offers_key_mapping_desc'] = 'Пример с TV: price==tv_price<br><code>&lt;price&gt;tv_price&lt;/prce&gt;</code><br><br>msProduct: price==ms_price<br><code>&lt;price&gt;ms_price&lt;/prce&gt;</code>';
+$_lang['setting_modxYMLprice_offers_key_mapping_desc'] = 'Генератор настроек: <a target="_blank" href="?a=index&namespace=modxYMLprice&panel=main">тут</a>';
 
 $_lang['setting_modxYMLprice_shop_catalog_id']="ID родительского каталога";
 $_lang['setting_modxYMLprice_shop_catalog_id_desc']="Корневая дерриктория каталога isfolder";
