@@ -1,0 +1,48 @@
+#offers_key_mapping_form{
+  background: #fff;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+#offers_key_mapping_modxInputs{
+  flex-basis: 100%;
+
+  background: #fff;
+}
+
+.buildInput{
+
+  padding: 15px;
+  background-color: rgb(240 240 240);;
+  border: 1px solid rgb(0 0 0 / 13%);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+
+  &:hover{
+
+    cursor: pointer;
+  }
+  a{
+    text-decoration: none;
+  }
+
+  h3{
+    width: 98%;
+  }
+
+  div.input{
+    display: flex;
+    flex-direction: column;
+  }
+
+  i.buildInput_dell{
+    position: absolute;
+    right: 2rem;
+  }
+}
+
+.d-none{
+  display: none;
+  visibility: hidden;
+}
