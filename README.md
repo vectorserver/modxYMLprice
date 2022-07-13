@@ -1,6 +1,6 @@
 Компонент **modxYMLprice**
 
-Данный компонет предназначен дла генерации XML прайса в формате Yandex YML (рис. 1)
+Данный компонет предназначен дла генерации XML прайса в формате Yandex YML ([рис. 1](https://raw.githubusercontent.com/vectorserver/modxYMLprice/master/_build/images/2022-07-13_14-50-57.png "рис. 1"))
 
 **Вывод информации через сниппет:**
 ```php
@@ -33,3 +33,11 @@
 	 `modxYMLprice_shop_url` - Адрес сайта магазина, записанный согласно стандарту RFC 3986 [[++site_url]]
 	 modxYMLprice_snippet_handler - Сниппет обработчик, По умолчанию pdoResources
 
+**Images**
+[![1](https://raw.githubusercontent.com/vectorserver/modxYMLprice/master/_build/images/2022-07-13_14-47-41.png "1")](https://raw.githubusercontent.com/vectorserver/modxYMLprice/master/_build/images/2022-07-13_14-47-41.png "1")
+
+[![](https://raw.githubusercontent.com/vectorserver/modxYMLprice/master/_build/images/2022-07-13_14-48-19.png)](https://raw.githubusercontent.com/vectorserver/modxYMLprice/master/_build/images/2022-07-13_14-48-19.png)
+
+[![](https://raw.githubusercontent.com/vectorserver/modxYMLprice/master/_build/images/2022-07-13_14-49-16.png)](https://raw.githubusercontent.com/vectorserver/modxYMLprice/master/_build/images/2022-07-13_14-49-16.png)
+
+[![](https://raw.githubusercontent.com/vectorserver/modxYMLprice/master/_build/images/2022-07-13_14-50-27.png)](https://raw.githubusercontent.com/vectorserver/modxYMLprice/master/_build/images/2022-07-13_14-50-27.png)
