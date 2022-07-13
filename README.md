@@ -1,4 +1,5 @@
-Компонент **modxYMLprice** [скачать]([download][1] [1]: https://github.com/vectorserver/modxYMLprice/raw/master/_build/dist/modxymlprice-2.2.126-pl.transport.zip "скачать" "скачать")
+Компонент **modxYMLprice** 
+[скачать](https://github.com/vectorserver/modxYMLprice/raw/master/_build/dist/modxymlprice-2.2.126-pl.transport.zip "скачать")
 
 Данный компонет предназначен дла генерации XML прайса в формате Yandex YML ([рис. 1](https://raw.githubusercontent.com/vectorserver/modxYMLprice/master/_build/images/2022-07-13_14-50-57.png "рис. 1"))
 
