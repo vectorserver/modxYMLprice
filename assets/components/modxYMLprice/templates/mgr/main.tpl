@@ -8,8 +8,13 @@
             <form id="offers_key_mapping_form">
                 <div id="offers_key_mapping_modxInputs">Загрузка полей Modx...</div>
             </form>
+            <datalist id="modxInputs">
 
+            </datalist>
 
+            <div id="previewSettings">
+
+            </div>
             <div>
                 <span class="x-btn x-btn-small" style="display: none">
                     <em class="">
