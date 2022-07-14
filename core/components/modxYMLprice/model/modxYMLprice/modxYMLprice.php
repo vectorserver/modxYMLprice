@@ -49,6 +49,8 @@ class modxYMLprice
         $this->config['offers']['offers_key_mapping'] = json_decode($offersConfig);
         $this->config['tags'] = $this->prepareFields();
 
+        //tv and fields
+
 
     }
 
@@ -74,6 +76,55 @@ class modxYMLprice
     /**
      * @return array
      */
+    public function getAllfieldsResource()
+    {
+        $params_elem = array(
+            'fastMode' => '1',
+            'sdhowParentroot' => '1',
+            'select' => 'id,class_key',
+            'hideContainers' => 1,
+        );
+
+        $offers_data = $this->getData($params_elem);
+        $prepare = array();
+
+        foreach ($offers_data as $elem) {
+            /* @var msProduct $product */
+            ///* @var modDocument $product*/
+            $product = $this->modx->getObject($elem->class_key, $elem->id);
+            $prepare['pagetitle'] = array('name' => 'Resource', 'value' => 'pagetitle');
+            $prepare['description'] = array('name' => 'Resource', 'value' => 'description');
+            $prepare['introtext'] = array('name' => 'Resource', 'value' => 'introtext');
+            $prepare['uri'] = array('name' => 'Resource', 'value' => 'uri');
+            $prepare['alias'] = array('name' => 'Resource', 'value' => 'alias');
+            if ($elem->class_key == "msProduct") {
+                $optionsData = $product->getOne('Data');
+                foreach ($optionsData->toArray() as $k => $opt) {
+                    $prepare[$k] = array('name' => 'Ms2 Option', 'value' => 'ms_' . $k);
+                }
+            }
+
+            /* @var modTemplateVarResource $tvs */
+            $tvs = $this->modx->getCollection('modTemplateVarResource', array(
+                'contentid' => $product->id
+            ));
+            foreach ($tvs as $k => $tvItem) {
+                $tv = $tvItem->getOne('TemplateVar');
+                $prepare[$tv->name] = array('name' => "TV " . $tv->caption . " - " . $tv->name, 'value' => 'tv_' . $tv->name);
+            }
+
+
+        }
+
+
+        return $prepare;
+
+
+    }
+
+    /**
+     * @return array
+     */
     private function getYmlcategories()
     {
         //Вывод категорий
@@ -88,7 +139,7 @@ class modxYMLprice
 
         $rootCat = $this->modx->getObject('modResource', $this->config["shop"]["shop_catalog_id"]);
 
-        $categories[] = "\t\t\t<category id=\"{$rootCat->id}\">{$rootCat->pagetitle}</category>";
+        if ($rootCat) $categories[] = "\t\t\t<category id=\"{$rootCat->id}\">{$rootCat->pagetitle}</category>";
 
         foreach ($category_data as $item_category) {
             $categories[] = "\t\t\t<category id=\"{$item_category->id}\" parentId=\"{$item_category->parent}\">{$item_category->pagetitle}</category>";
@@ -230,7 +281,6 @@ class modxYMLprice
 
 
             }
-
 
 
             //options ms

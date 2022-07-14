@@ -20,6 +20,8 @@ class ModxYMLpriceIndexManagerController extends modParsedManagerController
     public function initialize() {
 
         $this->modxYMLprice = $this->modx->getService('modxYMLprice', 'modxYMLprice');
+
+        $this->modxYMLprice->config['getAllfieldsResource'] = $this->modxYMLprice->getAllfieldsResource();
         $configYml = json_encode($this->modxYMLprice->config);
 
         // Let's check the HTTP method to display a different content based on it (ie. when we submit a form)
