@@ -12,7 +12,7 @@ if (!defined('MODX_CORE_PATH')) {
 return [
     'name' => 'modxYMLprice',
     'name_lower' => 'modxYMLprice',
-    'version' => '2.2.126',
+    'version' => '2.2.128',
     'release' => 'pl',
     // Install package to site right after build
     'install' => true,
